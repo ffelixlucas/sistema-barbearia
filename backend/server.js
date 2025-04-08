@@ -4,12 +4,14 @@ require("dotenv").config();
 
 const app = express();
 
+const statusRoutes = require('./routes/status.routes');
+
+
 app.use(express.json());
 app.use(cors());
 
-app.get("/api", (req, res) => {
-  res.send("Servidor está online 🚀");
-});
+app.use('/api', statusRoutes);
+
 
 const PORT = process.env.PORT || 3000;
 
