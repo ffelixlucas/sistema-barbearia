@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
+const statusController = require ('../controllers/status.controller')
+
+
 //Rota de teste
 
-router.get('/', (req, res) =>{
-    res.send('Servidor está online 🚀');
-});
+router.get('/', statusController);
 
 module.exports = router;
