@@ -1,4 +1,6 @@
 const bcrypt = require("bcrypt");
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient();
 
 // Registart novos usuários
 
@@ -9,16 +11,20 @@ async function register(req, res) {
     // Criptografar a senha com bcrypt
     const senhaCriptografada = await bcrypt.hash(senha, 10);
 
-    // Mostrar no terminal
-
-    console.log("Dados recebidos:", {
-      nome,
-      email,
-      senhaOriginal: senha,
-      senhaCriptografada,
+    const novoUsuario = await prisma.user.create({
+      data: {
+        nome,
+        email,
+        senha: senhaCriptografada,
+      },
     });
 
-    res.status(201).json({ mensagem: "Usuario registrado com sucesso!" });
+    res
+      .status(201)
+      .json({
+        mensagem: "Usuario registrado com sucesso!",
+        usuario: novoUsuario,
+      });
   } catch (erro) {
     console.error("Erro ao registrar usuário:", erro);
     res.status(500).json({ mensagem: "Erro interno ao registrar usuario" });
