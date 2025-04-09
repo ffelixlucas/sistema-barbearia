@@ -46,15 +46,22 @@ async function loginUser(req, res) {
       return res.status(401).json({ mensagem: "Credenciais invalida" });
     }
 
-    // COmparar senha digitada com hash salvo
+    // Comparar senha digitada com hash salvo
     const senhaConfere = await bcrypt.compare(senha, usuario.senha);
 
     if (!senhaConfere) {
       return res.status(401).json({ mensagem: "credenciais inválidas" });
     }
 
+    //Gerar o token JWT
+    const token = JsonWebTokenError.sign(
+      { id: usuario.id, email: usuario.email }, // Payload com as informações que queremos no token
+      process.env.JWT_SECRET, // Chave secreta que será usada para assinar o token
+      { expiresIn: "1h" } // Tempo de expiração(1 hora)
+    );
+
     // se email e senha estiverem certos
-    res.status(200).json({ mensagem: "Login realizado com sucesso!" });
+    res.status(200).json({ mensagem: "Login realizado com sucesso!", token });
   } catch (erro) {
     console.error("Erro no login:", erro);
     res.status(500).json({ mensagem: "Erro interno no login" });
