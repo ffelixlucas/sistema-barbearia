@@ -19,12 +19,10 @@ async function register(req, res) {
       },
     });
 
-    res
-      .status(201)
-      .json({
-        mensagem: "Usuario registrado com sucesso!",
-        usuario: novoUsuario,
-      });
+    res.status(201).json({
+      mensagem: "Usuario registrado com sucesso!",
+      usuario: novoUsuario,
+    });
   } catch (erro) {
     console.error("Erro ao registrar usuário:", erro);
     res.status(500).json({ mensagem: "Erro interno ao registrar usuario" });
@@ -37,24 +35,19 @@ async function loginUser(req, res) {
   try {
     const { email, senha } = req.body;
 
-    // Simulando usuário que já está no banco com senha criptografada
-    const usuarioSimulado = {
-      email: "lucas@teste.com",
-      senhaCriptografada:
-        "$2b$10$Ao37b4P2.RkbiazF9D08juqQxfyfM3iZT0zf6F/rw85Hi9EPcK0Ua", // hash salvo do cadastro
-    };
+    //Buscar usuário real no banco pelo email
+    const usuario = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    //Verificando  se email e senha conferem
+    //Verificando o email
 
-    if (email !== usuarioSimulado.email) {
-      return res.status(401).json({ mensagem: "Credenciais inválidas" });
+    if (!usuario) {
+      return res.status(401).json({ mensagem: "Credenciais invalida" });
     }
 
     // COmparar senha digitada com hash salvo
-    const senhaConfere = await bcrypt.compare(
-      senha,
-      usuarioSimulado.senhaCriptografada
-    );
+    const senhaConfere = await bcrypt.compare(senha, usuario.senha);
 
     if (!senhaConfere) {
       return res.status(401).json({ mensagem: "credenciais inválidas" });
