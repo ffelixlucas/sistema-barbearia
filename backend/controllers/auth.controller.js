@@ -1,18 +1,34 @@
+const bcrypt = require('bcrypt');
 
 // Registart novos usuários
 
-function register(req, res){
-    const {nome, email, senha } = req.body;
+async function register(req, res){
+    try {
+        const {nome, email, senha } = req.body;
 
-    console.log('Dados recebidos:', { nome, email, senha});
+        // Criptografar a senha com bcrypt
+        const senhaCriptografada = await bcrypt.hash(senha, 10);
+
+        // Mostrar no terminal
+
+        console.log('Dados recebidos:', { 
+            nome,
+            email,
+            senhaOriginal: senha,
+            senhaCriptografada
+    });
 
     res.status(201).json({ mensagem: 'Usuario registrado com sucesso!'});
+   } catch (erro) {
+    console.error('Erro ao registrar usuário:', erro);
+    res.status(500).json({ mensagem: 'Erro interno ao registrar usuario'});
+   }
 }
 
 //Login
 
 function loginUser(req, res){
-    const {email, senha} = req.body;
+     const {email, senha} = req.body;
 
     //simulando um usuário cadastrado
 
