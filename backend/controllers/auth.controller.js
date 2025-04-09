@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const { PrismaClient } = require("@prisma/client");
+const jwt = require("jsonwebtoken"); // Correção aqui: importando o 'jsonwebtoken'
 const prisma = new PrismaClient();
 
 // Registart novos usuários
@@ -54,7 +55,7 @@ async function loginUser(req, res) {
     }
 
     //Gerar o token JWT
-    const token = JsonWebTokenError.sign(
+    const token = jwt.sign(
       { id: usuario.id, email: usuario.email }, // Payload com as informações que queremos no token
       process.env.JWT_SECRET, // Chave secreta que será usada para assinar o token
       { expiresIn: "1h" } // Tempo de expiração(1 hora)

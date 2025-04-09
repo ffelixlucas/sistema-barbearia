@@ -11,9 +11,13 @@ function verifyToken(req, res, next) {
       .json({ mensagem: "Acesso negado. Token não encontrado." });
   }
 
+  // Remove o "Bearer" do token (caso tenha)
+  const tokenFinal = token.split(" ")[1];
+
   // Verifica o Token
-  jwt.verify(token, process.env.JWT_SECRET, (erro, decoded) => {
-    if (error) {
+  jwt.verify(tokenFinal, process.env.JWT_SECRET, (erro, decoded) => {
+    if (erro) {
+      console.log("Erro ao verificar o token:", erro); // Adiciona um log do erro
       return res.status(403).json({ mensagem: "Token inválido." });
     }
 
