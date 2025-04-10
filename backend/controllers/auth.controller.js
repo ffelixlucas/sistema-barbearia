@@ -14,9 +14,9 @@ async function register(req, res) {
 
     const novoUsuario = await prisma.user.create({
       data: {
-        nome,
+        name: nome,
         email,
-        senha: senhaCriptografada,
+        password: senhaCriptografada,
       },
     });
 
@@ -48,7 +48,7 @@ async function loginUser(req, res) {
     }
 
     // Comparar senha digitada com hash salvo
-    const senhaConfere = await bcrypt.compare(senha, usuario.senha);
+    const senhaConfere = await bcrypt.compare(senha, usuario.password);
 
     if (!senhaConfere) {
       return res.status(401).json({ mensagem: "credenciais inválidas" });

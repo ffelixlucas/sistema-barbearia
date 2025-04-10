@@ -1,3 +1,5 @@
+// ✅ Solução definitiva do schema.prisma com todas as correções aplicadas
+
 // Conexão com o banco de dados
 datasource db {
   provider = "sqlite"
@@ -9,11 +11,220 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Modelo de usuário
+// Enums globais
+enum Role {
+  ADMIN
+  OWNER
+}
+
+enum BarberType {
+  COMMISSION
+  FIXED
+}
+
+enum PlanStatus {
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  UNPAID
+  PAID_ONLINE
+  PAID_IN_PERSON
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  senha     String
-  criadoEm  DateTime @default(now())
+  id           String      @id @default(uuid())
+  name         String
+  email        String      @unique
+  password     String
+  role         Role
+  barbershopId String?
+  barbershop   Barbershop? @relation("UserBarbershop", fields: [barbershopId], references: [id])
+  ownerOf      Barbershop? @relation("OwnerBarbershop")
+  logs         ActionLog[] @relation("UserLogs")
+  createdAt    DateTime    @default(now())
+}
+
+model Barbershop {
+  id             String          @id @default(uuid())
+  name           String
+  cnpj           String?         @unique
+  phone          String
+  email          String
+  address        String?
+  ownerId        String          @unique
+  owner          User            @relation("OwnerBarbershop", fields: [ownerId], references: [id])
+  users          User[]          @relation("UserBarbershop")
+  barbers        Barber[]
+  services       Service[]
+  customers      Customer[]      @relation("BarbershopCustomers")
+  customerLights CustomerLight[] @relation("BarbershopCustomerLights")
+  plans          Plan[]
+  logs           ActionLog[]     @relation("BarbershopLogs")
+  fidelities     FidelityLog[]   @relation("FidelityLogs")
+  appointments   Appointment[]   @relation("Appointments")
+  createdAt      DateTime        @default(now())
+}
+
+model Barber {
+  id           String            @id @default(uuid())
+  name         String
+  email        String?           @unique
+  phone        String?
+  type         BarberType
+  commission   Float?
+  fixedSalary  Float?
+  barbershopId String
+  barbershop   Barbershop        @relation(fields: [barbershopId], references: [id])
+  appointments Appointment[]
+  permissions  BarberPermission?
+  schedules    BarberSchedule[]  @relation("BarberSchedules")
+  blockDates   BarberBlockDate[] @relation("BarberBlocks")
+  logs         ActionLog[]       @relation("BarberLogs")
+  createdAt    DateTime          @default(now())
+}
+
+model BarberPermission {
+  id               String  @id @default(uuid())
+  barberId         String  @unique
+  canRebook        Boolean @default(false)
+  canConfirmCut    Boolean @default(false)
+  canSeeFullAgenda Boolean @default(false)
+  barber           Barber  @relation(fields: [barberId], references: [id])
+}
+
+model CustomerLight {
+  id           String        @id @default(uuid())
+  name         String
+  cpf          String?       @unique
+  phone        String?       @unique
+  barbershopId String
+  barbershop   Barbershop    @relation("BarbershopCustomerLights", fields: [barbershopId], references: [id])
+  appointments Appointment[]
+  fidelities   FidelityLog[]
+  createdAt    DateTime      @default(now())
+}
+
+model Customer {
+  id           String        @id @default(uuid())
+  name         String
+  email        String        @unique
+  password     String
+  phone        String?
+  cpf          String?
+  barbershopId String
+  barbershop   Barbershop    @relation("BarbershopCustomers", fields: [barbershopId], references: [id])
+  appointments Appointment[]
+  fidelities   FidelityLog[]
+  plan         CustomerPlan?
+  createdAt    DateTime      @default(now())
+}
+
+model Plan {
+  id           String         @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  durationDays Int
+  restrictions Json?
+  barbershopId String
+  barbershop   Barbershop     @relation(fields: [barbershopId], references: [id])
+  customers    CustomerPlan[]
+  createdAt    DateTime       @default(now())
+}
+
+model CustomerPlan {
+  id         String     @id @default(uuid())
+  customerId String     @unique
+  planId     String
+  startDate  DateTime
+  endDate    DateTime
+  status     PlanStatus
+  customer   Customer   @relation(fields: [customerId], references: [id])
+  plan       Plan       @relation(fields: [planId], references: [id])
+}
+
+model FidelityLog {
+  id              String         @id @default(uuid())
+  barbershopId    String
+  barbershop      Barbershop     @relation("FidelityLogs", fields: [barbershopId], references: [id])
+  customerId      String?
+  customer        Customer?      @relation(fields: [customerId], references: [id])
+  customerLightId String?
+  customerLight   CustomerLight? @relation(fields: [customerLightId], references: [id])
+  appointmentId   String
+  appointment     Appointment    @relation(fields: [appointmentId], references: [id])
+  createdAt       DateTime       @default(now())
+}
+
+model Appointment {
+  id              String            @id @default(uuid())
+  serviceId       String
+  barberId        String
+  barbershopId    String
+  dateTime        DateTime
+  status          AppointmentStatus @default(PENDING)
+  paymentStatus   PaymentStatus     @default(UNPAID)
+  confirmedById   String?
+  confirmedAt     DateTime?
+  service         Service           @relation(fields: [serviceId], references: [id])
+  barber          Barber            @relation(fields: [barberId], references: [id])
+  barbershop      Barbershop        @relation("Appointments", fields: [barbershopId], references: [id])
+  customerId      String?
+  customer        Customer?         @relation(fields: [customerId], references: [id])
+  customerLightId String?
+  customerLight   CustomerLight?    @relation(fields: [customerLightId], references: [id])
+  fidelityLogs    FidelityLog[]
+}
+
+model BarberSchedule {
+  id        String @id @default(uuid())
+  barberId  String
+  weekday   Int
+  startTime String
+  endTime   String
+  barber    Barber @relation("BarberSchedules", fields: [barberId], references: [id])
+}
+
+model BarberBlockDate {
+  id       String   @id @default(uuid())
+  barberId String
+  date     DateTime
+  reason   String?
+  barber   Barber   @relation("BarberBlocks", fields: [barberId], references: [id])
+}
+
+model ActionLog {
+  id           String     @id @default(uuid())
+  userId       String?
+  barberId     String?
+  barbershopId String
+  type         String
+  entity       String
+  details      Json
+  timestamp    DateTime   @default(now())
+  user         User?      @relation("UserLogs", fields: [userId], references: [id])
+  barber       Barber?    @relation("BarberLogs", fields: [barberId], references: [id])
+  barbershop   Barbershop @relation("BarbershopLogs", fields: [barbershopId], references: [id])
+}
+
+model Service {
+  id           String        @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  durationMin  Int
+  barbershopId String
+  barbershop   Barbershop    @relation(fields: [barbershopId], references: [id])
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
 }
