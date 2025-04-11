@@ -47,12 +47,14 @@ model User {
   email        String      @unique
   password     String
   role         Role
+  phone        String?     
   barbershopId String?
   barbershop   Barbershop? @relation("UserBarbershop", fields: [barbershopId], references: [id])
   ownerOf      Barbershop? @relation("OwnerBarbershop")
   logs         ActionLog[] @relation("UserLogs")
   createdAt    DateTime    @default(now())
 }
+
 
 model Barbershop {
   id             String          @id @default(uuid())
